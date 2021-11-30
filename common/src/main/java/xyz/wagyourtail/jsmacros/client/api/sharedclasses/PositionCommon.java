@@ -1,7 +1,7 @@
 package xyz.wagyourtail.jsmacros.client.api.sharedclasses;
 
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.Vec3;
 
 /**
  * @author Wagyourtail
@@ -93,8 +93,8 @@ public class PositionCommon {
         public static final Pos3D ZERO = new Pos3D(0, 0, 0);
         public double z;
 
-        public Pos3D(Vec3d vec) {
-            this(vec.getX(), vec.getY(), vec.getZ());
+        public Pos3D(net.minecraft.util.Vec3 vec) {
+            this(vec.x, vec.y, vec.z);
         }
 
         public Pos3D(double x, double y, double z) {
@@ -154,8 +154,8 @@ public class PositionCommon {
         }
 
         @Override
-        public Vec3D toVector() {
-            return new Vec3D(ZERO, this);
+        public Vec3 toVector() {
+            return new Vec3(ZERO, this);
         }
     }
 
@@ -283,8 +283,8 @@ public class PositionCommon {
             return String.format("%f, %f -> %f, %f", x1, y1, x2, y2);
         }
 
-        public Vec3D to3D() {
-            return new Vec3D(x1, y1, 0, x2, y2, 0);
+        public Vec3 to3D() {
+            return new Vec3(x1, y1, 0, x2, y2, 0);
         }
     }
 
@@ -292,17 +292,17 @@ public class PositionCommon {
      * @author Wagyourtail
      * @since 1.2.6 [citation needed]
      */
-    public static class Vec3D extends Vec2D {
+    public static class Vec3 extends Vec2D {
         public double z1;
         public double z2;
 
-        public Vec3D(double x1, double y1, double z1, double x2, double y2, double z2) {
+        public Vec3(double x1, double y1, double z1, double x2, double y2, double z2) {
             super(x1, y1, x2, y2);
             this.z1 = z1;
             this.z2 = z2;
         }
 
-        public Vec3D(Pos3D start, Pos3D end) {
+        public Vec3(Pos3D start, Pos3D end) {
             super(start, end);
             this.z1 = start.z;
             this.z2 = end.z;
@@ -338,8 +338,8 @@ public class PositionCommon {
             return Math.sqrt(dx*dx + dy*dy + dz*dz);
         }
 
-        public Vec3D add(Vec3D vec) {
-            return new Vec3D(this.x1 + vec.x1, this.y1 + vec.y1, this.z1 + vec.z1, this.x2 + vec.x2, this.y2 + vec.y2, this.z2 + vec.z2);
+        public Vec3 add(Vec3 vec) {
+            return new Vec3(this.x1 + vec.x1, this.y1 + vec.y1, this.z1 + vec.z1, this.x2 + vec.x2, this.y2 + vec.y2, this.z2 + vec.z2);
         }
 
         /**
@@ -354,12 +354,12 @@ public class PositionCommon {
          *
          * @return
          */
-        public Vec3D add(double x1, double y1, double z1, double x2, double y2, double z2) {
-            return new Vec3D(this.x1 + x1, this.y1 + y1, this.z1 + z1, this.x2 + x2, this.y2 + y2, this.z2 + z2);
+        public Vec3 add(double x1, double y1, double z1, double x2, double y2, double z2) {
+            return new Vec3(this.x1 + x1, this.y1 + y1, this.z1 + z1, this.x2 + x2, this.y2 + y2, this.z2 + z2);
         }
 
-        public Vec3D multiply(Vec3D vec) {
-            return new Vec3D(this.x1 * vec.x1, this.y1 * vec.y1, this.z1 * vec.z1, this.x2 * vec.x2, this.y2 * vec.y2, this.z2 * vec.z2);
+        public Vec3 multiply(Vec3 vec) {
+            return new Vec3(this.x1 * vec.x1, this.y1 * vec.y1, this.z1 * vec.z1, this.x2 * vec.x2, this.y2 * vec.y2, this.z2 * vec.z2);
         }
 
         /**
@@ -374,8 +374,8 @@ public class PositionCommon {
          *
          * @return
          */
-        public Vec3D multiply(double x1, double y1, double z1, double x2, double y2, double z2) {
-            return new Vec3D(this.x1 * x1, this.y1 * y1, this.z1 * z1, this.x2 * x2, this.y2 * y2, this.z2 * z2);
+        public Vec3 multiply(double x1, double y1, double z1, double x2, double y2, double z2) {
+            return new Vec3(this.x1 * x1, this.y1 * y1, this.z1 * z1, this.x2 * x2, this.y2 * y2, this.z2 * z2);
         }
 
         /**
@@ -386,8 +386,8 @@ public class PositionCommon {
          * @return
          */
          @Override
-        public Vec3D scale(double scale) {
-            return new Vec3D(x1 * scale, y1 * scale, z1 * scale, x2 * scale, y2 * scale, z2 * scale);
+        public Vec3 scale(double scale) {
+            return new Vec3(x1 * scale, y1 * scale, z1 * scale, x2 * scale, y2 * scale, z2 * scale);
         }
 
         public float getPitch() {
@@ -404,25 +404,25 @@ public class PositionCommon {
             return (float) -MathHelper.wrapDegrees(Math.toDegrees(Math.atan2(dx, dz)));
         }
 
-        public double dotProduct(Vec3D vec) {
+        public double dotProduct(Vec3 vec) {
             double dz1 = z1 - z2;
             double dz2 = vec.z2 - vec.z1;
             return super.dotProduct(vec) + dz1 * dz2;
         }
 
-        public Vec3D crossProduct(Vec3D vec) {
+        public Vec3 crossProduct(Vec3 vec) {
             double dx1 = x2 - x1;
             double dx2 = vec.x2 - vec.x1;
             double dy1 = y2 - y1;
             double dy2 = vec.y2 - vec.y1;
             double dz1 = z1 - z2;
             double dz2 = vec.z2 - vec.z1;
-            return new Vec3D(0, 0, 0, dy1*dz2 - dz1*dy2, dz1*dx2 - dx1*dz2, dx1*dy2 - dy1*dx2);
+            return new Vec3(0, 0, 0, dy1*dz2 - dz1*dy2, dz1*dx2 - dx1*dz2, dx1*dy2 - dy1*dx2);
         }
 
         @Override
-        public Vec3D reverse() {
-            return new Vec3D(x2, y2, z2, x1, y1, z1);
+        public Vec3 reverse() {
+            return new Vec3(x2, y2, z2, x1, y1, z1);
         }
 
         @Override

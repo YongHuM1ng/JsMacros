@@ -1,10 +1,12 @@
 package xyz.wagyourtail.jsmacros.client.api.classes;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.*;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.lwjgl.opengl.GL11;
 import xyz.wagyourtail.jsmacros.client.api.sharedclasses.PositionCommon;
 
@@ -272,20 +274,21 @@ public class Draw3D {
 
 
     public void render() {
-        MinecraftClient mc  = MinecraftClient.getInstance();
+        Minecraft mc  = Minecraft.getInstance();
     
         // setup
         GlStateManager.enableBlend();
         GlStateManager.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-        GlStateManager.lineWidth(2.5F);
+        GL11.glLineWidth(2.5F);
         GlStateManager.disableTexture();
         GlStateManager.matrixMode(5889);
     
         GlStateManager.pushMatrix();
-    
+
         // offsetRender
-        Camera camera = mc.gameRenderer.getCamera();
-        Vec3d camPos = camera.getPos();
+        RenderManager camera = mc.getEntityRenderManager();
+        PositionCommon.Pos3D camPos = new PositionCommon.Pos3D(camera.field_78730_l, camera.field_78731_m, camera.field_78728_n);
+
         //render
         synchronized (boxes) {
             for (Box b : boxes) {
@@ -308,7 +311,7 @@ public class Draw3D {
     }
     
     public static class Box {
-        public PositionCommon.Vec3D pos;
+        public PositionCommon.Vec3 pos;
         public int color;
         public int fillColor;
         public boolean fill;
@@ -341,7 +344,7 @@ public class Draw3D {
          * @param z2
          */
         public void setPos(double x1, double y1, double z1, double x2, double y2, double z2) {
-            pos = new PositionCommon.Vec3D(x1, y1, z1, x2, y2, z2);
+            pos = new PositionCommon.Vec3(x1, y1, z1, x2, y2, z2);
         }
 
 
@@ -412,7 +415,7 @@ public class Draw3D {
             this.fill = fill;
         }
     
-        public void render(Vec3d camPos) {
+        public void render(PositionCommon.Pos3D camPos) {
             final boolean cull = !this.cull;
             int a = (color >> 24) & 0xFF;
             int r = (color >> 16) & 0xFF;
@@ -422,7 +425,7 @@ public class Draw3D {
             if (cull) GlStateManager.disableDepthTest();
             
             Tessellator tess = Tessellator.getInstance();
-            BufferBuilder buf = tess.getBuffer();
+            WorldRenderer buf = tess.getBuffer();
         
             if (this.fill) {
                 float fa = ((fillColor >> 24) & 0xFF) / 255F;
@@ -430,14 +433,14 @@ public class Draw3D {
                 float fg = ((fillColor >> 8) & 0xFF) / 255F;
                 float fb = (fillColor & 0xFF) / 255F;
             
-                buf.begin(GL11.GL_TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+                buf.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
             
-                WorldRenderer.buildBox(buf, pos.x1 - camPos.x, pos.y1 - camPos.y, pos.z1 - camPos.z, pos.x2 - camPos.x, pos.y2 - camPos.y, pos.z2 - camPos.z, fr, fg, fb, fa);
+                drawBox(buf, pos.x1 - camPos.x, pos.y1 - camPos.y, pos.z1 - camPos.z, pos.x2 - camPos.x, pos.y2 - camPos.y, pos.z2 - camPos.z, fr, fg, fb, fa);
             
                 tess.draw();
             }
         
-            buf.begin(GL11.GL_LINE_STRIP, VertexFormats.POSITION_COLOR);
+            buf.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
         
             buf.vertex(pos.x1 - camPos.x, pos.y1 - camPos.y, pos.z1 - camPos.z).color(r, g, b, a).next();
             buf.vertex(pos.x1 - camPos.x, pos.y1 - camPos.y, pos.z2 - camPos.z).color(r, g, b, a).next();
@@ -460,10 +463,44 @@ public class Draw3D {
             
             if (cull) GlStateManager.enableDepthTest();
         }
+        
+        private static void drawBox(WorldRenderer buffer, double x1, double y1, double z1, double x2, double y2, double z2, float red, float green, float blue, float alpha) {
+            buffer.vertex(x1, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y1, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y2, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y2, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y2, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y1, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y1, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y1, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y2, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y1, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y1, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y1, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y1, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y2, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y2, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x1, y2, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z1).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z2).color(red, green, blue, alpha).next();
+            buffer.vertex(x2, y2, z2).color(red, green, blue, alpha).next();
+        }
+        
     }
     
     public static class Line {
-        public PositionCommon.Vec3D pos;
+        public PositionCommon.Vec3 pos;
         public int color;
         public boolean cull;
         public Line(double x1, double y1, double z1, double x2, double y2, double z2, int color, boolean cull) {
@@ -489,7 +526,7 @@ public class Draw3D {
          * @param z2
          */
         public void setPos(double x1, double y1, double z1, double x2, double y2, double z2) {
-            pos = new PositionCommon.Vec3D(x1, y1, z1, x2, y2, z2);
+            pos = new PositionCommon.Vec3(x1, y1, z1, x2, y2, z2);
         }
         
         /**
@@ -521,7 +558,7 @@ public class Draw3D {
             this.color = (color & 0xFFFFFF) | (alpha << 24);
         }
     
-        public void render(Vec3d camPos) {
+        public void render(PositionCommon.Pos3D camPos) {
             final boolean cull = !this.cull;
             if (cull) GlStateManager.disableDepthTest();
         
@@ -530,8 +567,8 @@ public class Draw3D {
             int g = (color >> 8) & 0xFF;
             int b = color & 0xFF;
             Tessellator tess = Tessellator.getInstance();
-            BufferBuilder buf = tess.getBuffer();
-            buf.begin(GL11.GL_LINE_STRIP, VertexFormats.POSITION_COLOR);
+            WorldRenderer buf = tess.getBuffer();
+            buf.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
             buf.vertex(pos.x1 - camPos.x, pos.y1 - camPos.y, pos.z1 - camPos.z).color(r, g, b, a).next();
             buf.vertex(pos.x1 - camPos.x, pos.y1 - camPos.y, pos.z1 - camPos.z).color(r, g, b, a).next();
             buf.vertex(pos.x2 - camPos.x, pos.y2 - camPos.y, pos.z2 - camPos.z).color(r, g, b, a).next();

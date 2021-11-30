@@ -1,10 +1,8 @@
 package xyz.wagyourtail.jsmacros.client.api.library.impl;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.toast.SystemToast;
-import net.minecraft.client.toast.ToastManager;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.IChatComponent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.wagyourtail.jsmacros.client.access.IChatHud;
@@ -28,7 +26,7 @@ import java.util.concurrent.Semaphore;
  @Library("Chat")
  @SuppressWarnings("unused")
 public class FChat extends BaseLibrary {
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
+    private static final Minecraft mc = Minecraft.getInstance();
     /**
      * Log to player chat.
      * 
@@ -69,13 +67,12 @@ public class FChat extends BaseLibrary {
     
     private static void logInternal(String message) {
         if (message != null) {
-            LiteralText text = new LiteralText(message);
+            ChatComponentText text = new ChatComponentText(message);
             ((IChatHud)mc.inGameHud.getChatHud()).jsmacros_addMessageBypass(text);
         }
     }
     
     private static void logInternal(TextHelper text) {
-        MinecraftClient mc = MinecraftClient.getInstance();
         ((IChatHud)mc.inGameHud.getChatHud()).jsmacros_addMessageBypass(text.getRaw());
     }
     
@@ -151,9 +148,9 @@ public class FChat extends BaseLibrary {
      */
     public void actionbar(Object text, boolean tinted) {
         assert mc.inGameHud != null;
-        Text textt = null;
+        IChatComponent textt = null;
         if (text instanceof TextHelper) textt = ((TextHelper) text).getRaw();
-        else if (text != null) textt = new LiteralText(text.toString());
+        else if (text != null) textt = new ChatComponentText(text.toString());
         mc.inGameHud.setOverlayMessage(textt, tinted);
     }
     
@@ -166,12 +163,12 @@ public class FChat extends BaseLibrary {
      * @param desc
      */
     public void toast(Object title, Object desc) {
-        ToastManager t = mc.getToastManager();
-        if (t != null) {
-            Text titlee = (title instanceof TextHelper) ? ((TextHelper) title).getRaw() : title != null ? new LiteralText(title.toString()) : null;
-            Text descc = (desc instanceof TextHelper) ? ((TextHelper) desc).getRaw() : desc != null ? new LiteralText(desc.toString()) : null;
-            if (titlee != null) t.add(new SystemToast(null, titlee, descc));
-        }
+//        ToastManager t = mc.getToastManager();
+//        if (t != null) {
+//            Text titlee = (title instanceof TextHelper) ? ((TextHelper) title).getRaw() : title != null ? new LiteralText(title.toString()) : null;
+//            Text descc = (desc instanceof TextHelper) ? ((TextHelper) desc).getRaw() : desc != null ? new LiteralText(desc.toString()) : null;
+//            if (titlee != null) t.add(new SystemToast(null, titlee, descc));
+//        }
     }
     
     /**
@@ -184,7 +181,7 @@ public class FChat extends BaseLibrary {
      * @return a new {@link xyz.wagyourtail.jsmacros.client.api.helpers.TextHelper TextHelper}
      */
     public TextHelper createTextHelperFromString(String content) {
-        return new TextHelper(new LiteralText(content));
+        return new TextHelper(new ChatComponentText(content));
     }
 
     /**
@@ -233,7 +230,7 @@ public class FChat extends BaseLibrary {
      * @return
      */
     public CommandBuilder createCommandBuilder(String name) {
-        return CommandBuilder.createNewBuilder.apply(name);
+        return new CommandBuilder(name);
     }
 
     public ChatHistoryManager getHistory() {

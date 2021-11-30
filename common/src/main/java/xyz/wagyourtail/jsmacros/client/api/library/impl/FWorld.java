@@ -1,28 +1,20 @@
 package xyz.wagyourtail.jsmacros.client.api.library.impl;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ClientBossBar;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.LightType;
-import net.minecraft.world.dimension.DimensionType;
-import xyz.wagyourtail.jsmacros.client.access.IBossBarHud;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.IChatComponent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.EnumSkyBlock;
 import xyz.wagyourtail.jsmacros.client.access.IPlayerListHud;
 import xyz.wagyourtail.jsmacros.client.api.helpers.*;
 import xyz.wagyourtail.jsmacros.core.Core;
@@ -32,6 +24,7 @@ import xyz.wagyourtail.jsmacros.core.library.Library;
 import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.util.*;
 
 /**
@@ -46,7 +39,7 @@ import java.util.*;
  @SuppressWarnings("unused")
 public class FWorld extends BaseLibrary {
     
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
+    private static final Minecraft mc = Minecraft.getInstance();
     /**
      * Don't modify.
      */
@@ -76,10 +69,10 @@ public class FWorld extends BaseLibrary {
     /**
      * @return players within render distance.
      */
-    public List<PlayerEntityHelper<PlayerEntity>> getLoadedPlayers() {
+    public List<PlayerEntityHelper<EntityPlayer>> getLoadedPlayers() {
         assert mc.world != null;
-        List<PlayerEntityHelper<PlayerEntity>> players = new ArrayList<>();
-        for (AbstractClientPlayerEntity p : ImmutableList.copyOf(mc.world.getPlayers())) {
+        List<PlayerEntityHelper<EntityPlayer>> players = new ArrayList<>();
+        for (EntityPlayer p : ImmutableList.copyOf(mc.world.playerEntities)) {
             players.add(new PlayerEntityHelper<>(p));
         }
         return players;
@@ -89,10 +82,10 @@ public class FWorld extends BaseLibrary {
      * @return players on the tablist.
      */
     public List<PlayerListEntryHelper> getPlayers() {
-        ClientPlayNetworkHandler handler = mc.getNetworkHandler();
+        NetHandlerPlayClient handler = mc.getNetworkHandler();
         assert handler != null;
         List<PlayerListEntryHelper> players = new ArrayList<>();
-        for (PlayerListEntry p : ImmutableList.copyOf(handler.getPlayerList())) {
+        for (NetworkPlayerInfo p : ImmutableList.copyOf(handler.getPlayerList())) {
             players.add(new PlayerListEntryHelper(p));
         }
         return players;
@@ -108,9 +101,9 @@ public class FWorld extends BaseLibrary {
     public BlockDataHelper getBlock(int x, int y, int z) {
         assert mc.world != null;
         BlockPos bp = new BlockPos(x, y, z);
-        BlockState b = mc.world.getBlockState(bp);
-        BlockEntity t = mc.world.getBlockEntity(bp);
-        if (b.getBlock().equals(Blocks.VOID_AIR)) return null;
+        IBlockState b = mc.world.getBlockState(bp);
+        TileEntity t = mc.world.getBlockEntity(bp);
+        if (b.getBlock().equals(Blocks.AIR)) return null;
         return new BlockDataHelper(b, t, bp);
     }
     
@@ -129,7 +122,7 @@ public class FWorld extends BaseLibrary {
     public List<EntityHelper<?>> getEntities() {
         assert mc.world != null;
         List<EntityHelper<?>> entities = new ArrayList<>();
-        for (Entity e : ImmutableList.copyOf(mc.world.getEntities())) {
+        for (Entity e : ImmutableList.copyOf(mc.world.entities)) {
             entities.add(EntityHelper.create(e));
         }
         return entities;
@@ -141,7 +134,7 @@ public class FWorld extends BaseLibrary {
      */
     public String getDimension() {
         assert mc.world != null;
-        return DimensionType.getId(mc.world.getDimension().getType()).toString();
+        return mc.world.getLevelProperties().getLevelName();
     }
     
     /**
@@ -151,7 +144,7 @@ public class FWorld extends BaseLibrary {
     public String getBiome() {
         assert mc.world != null;
         assert mc.player != null;
-        return Registry.BIOME.getId(mc.world.getBiome(mc.player.getBlockPos())).toString();
+        return mc.world.getBiome(mc.player.getBlockPos()).name;
     }
     
     /**
@@ -160,7 +153,7 @@ public class FWorld extends BaseLibrary {
      */
     public long getTime() {
         assert mc.world != null;
-        return mc.world.getTime();
+        return mc.world.getLastUpdateTime();
     }
     
     /**
@@ -189,7 +182,7 @@ public class FWorld extends BaseLibrary {
      */
     public int getDifficulty() {
         assert mc.world != null;
-        return mc.world.getDifficulty().getId();
+        return mc.world.getGlobalDifficulty().getId();
     }
     
     /**
@@ -198,7 +191,7 @@ public class FWorld extends BaseLibrary {
      */    
     public int getMoonPhase() {
         assert mc.world != null;
-        return mc.world.getMoonPhase();
+        return (int) (mc.world.getMoonPhase() * 4);
     }
     
     /**
@@ -210,7 +203,7 @@ public class FWorld extends BaseLibrary {
      */
     public int getSkyLight(int x, int y, int z) {
         assert mc.world != null;
-        return mc.world.getLightLevel(LightType.SKY, new BlockPos(x, y, z));
+        return mc.world.getLightAtPos(EnumSkyBlock.SKY, new BlockPos(x, y, z));
     }
     
     /**
@@ -222,7 +215,7 @@ public class FWorld extends BaseLibrary {
      */
     public int getBlockLight(int x, int y, int z) {
         assert mc.world != null;
-        return mc.world.getLightLevel(LightType.BLOCK, new BlockPos(x, y, z));
+        return mc.world.getLightAtPos(EnumSkyBlock.BLOCK, new BlockPos(x, y, z));
     }
     
     /**
@@ -280,9 +273,9 @@ public class FWorld extends BaseLibrary {
      * @param pitch
      */
     public void playSound(String id, double volume, double pitch) {
-        SoundEvent sound = Registry.SOUND_EVENT.get(new Identifier(id));
+        ResourceLocation sound = new ResourceLocation(id);
         assert sound != null;
-        mc.execute(() -> mc.getSoundManager().play(PositionedSoundInstance.master(sound, (float) pitch, (float) volume)));
+        mc.execute(() -> mc.getSoundManager().play(new PositionedSoundRecord(sound, (float) volume, (float) pitch, 0, 0, 0)));
     }
     
     /**
@@ -296,24 +289,17 @@ public class FWorld extends BaseLibrary {
      * @param z
      */
     public void playSound(String id, double volume, double pitch, double x, double y, double z) {
-        assert mc.world != null;
-        SoundEvent sound = Registry.SOUND_EVENT.get(new Identifier(id));
+        ResourceLocation sound = new ResourceLocation(id);
         assert sound != null;
-        mc.execute(() -> mc.world.playSound(x, y, z, sound, SoundCategory.MASTER, (float) volume, (float) pitch, true));
+        mc.execute(() -> mc.getSoundManager().play(new PositionedSoundRecord(sound, (float) volume, (float) pitch, (float) x, (float) y, (float) z)));
     }
     
     /**
      * @since 1.2.1
      * @return a map of boss bars by the boss bar's UUID.
      */
-    public Map<String, BossBarHelper> getBossBars() {
-        assert mc.inGameHud != null;
-        Map<UUID, ClientBossBar> bars = ImmutableMap.copyOf(((IBossBarHud) mc.inGameHud.getBossBarHud()).jsmacros_GetBossBars());
-        Map<String, BossBarHelper> out = new HashMap<>();
-        for (Map.Entry<UUID, ClientBossBar> e : ImmutableList.copyOf(bars.entrySet())) {
-            out.put(e.getKey().toString(), new BossBarHelper(e.getValue()));
-        }
-        return out;
+    public BossBarHelper getBossBars() {
+        return new BossBarHelper();
     }
     
     /**
@@ -325,7 +311,7 @@ public class FWorld extends BaseLibrary {
      */
     public boolean isChunkLoaded(int chunkX, int chunkZ) {
         if (mc.world == null) return false;
-        return mc.world.getChunkManager().isChunkLoaded(chunkX, chunkZ);
+        return mc.world.getChunkProvider().chunkExists(chunkX, chunkZ);
     }
     
     /**
@@ -333,11 +319,11 @@ public class FWorld extends BaseLibrary {
      * @return the current server address as a string ({@code server.address/server.ip:port}).
      */
     public String getCurrentServerAddress() {
-        ClientPlayNetworkHandler h = mc.getNetworkHandler();
+        NetworkManager h = mc.getNetworkHandler().getClientConnection();
         if (h == null) return null;
-        ClientConnection c = h.getConnection();
+        SocketAddress c = h.getAddress();
         if (c == null) return null;
-        return c.getAddress().toString();
+        return c.toString();
     }
     
     /**
@@ -348,7 +334,7 @@ public class FWorld extends BaseLibrary {
      */
     public String getBiomeAt(int x, int z) {
         assert mc.world != null;
-        return Registry.BIOME.getId(mc.world.getBiome(new BlockPos(x, 10, z))).toString();
+        return mc.world.getBiome(new BlockPos(x, 10, z)).name;
     }
     
     /**
@@ -364,7 +350,7 @@ public class FWorld extends BaseLibrary {
      * @return text helper for the top part of the tab list (above the players)
      */
     public TextHelper getTabListHeader() {
-        Text header = ((IPlayerListHud)mc.inGameHud.getPlayerListWidget()).jsmacros_getHeader();
+        IChatComponent header = ((IPlayerListHud)mc.inGameHud.getPlayerListWidget()).jsmacros_getHeader();
         if (header != null) return new TextHelper(header);
         return null;
     }
@@ -374,7 +360,7 @@ public class FWorld extends BaseLibrary {
      * @return  text helper for the bottom part of the tab list (below the players)
      */
     public TextHelper getTabListFooter() {
-        Text footer = ((IPlayerListHud)mc.inGameHud.getPlayerListWidget()).jsmacros_getFooter();
+        IChatComponent footer = ((IPlayerListHud)mc.inGameHud.getPlayerListWidget()).jsmacros_getFooter();
         if (footer != null) return new TextHelper(footer);
         return null;
     }

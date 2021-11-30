@@ -24,8 +24,8 @@ public class FPositionCommon extends BaseLibrary {
      *
      * @return
      */
-    public PositionCommon.Vec3D createVec(double x1, double y1, double z1, double x2, double y2, double z2) {
-        return new PositionCommon.Vec3D(x1, y1, z1, x2, y2, z2);
+    public PositionCommon.Vec3 createVec(double x1, double y1, double z1, double x2, double y2, double z2) {
+        return new PositionCommon.Vec3(x1, y1, z1, x2, y2, z2);
     }
 
     /**
