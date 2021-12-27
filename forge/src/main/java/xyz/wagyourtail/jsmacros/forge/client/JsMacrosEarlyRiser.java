@@ -9,22 +9,40 @@ import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.Mixins;
 import org.spongepowered.asm.mixin.connect.IMixinConnector;
-import xyz.wagyourtail.jsmacros.forge.client.FakeFabricLoader;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 public class JsMacrosEarlyRiser implements IMixinConnector {
     public static final Logger LOGGER  = LogManager.getLogger("JsMacros EarlyRiser");
-    public static final List<URL> urls = new ArrayList<>();
-    public static ClassLoader loader;
+    public static final Method addURL;
+    public static final URLClassLoader classLoader;
+
+    static {
+        URLClassLoader classLoader1;
+        Method addURL1;
+        try {
+            Field fd = TransformingClassLoader.class.getDeclaredField("delegatedClassLoader");
+            fd.setAccessible(true);
+            classLoader1 = (URLClassLoader) fd.get(JsMacrosEarlyRiser.class.getClassLoader());
+            addURL1 = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+            addURL1.setAccessible(true);
+        } catch (IllegalAccessException | NoSuchFieldException | NoSuchMethodException e) {
+            e.printStackTrace();
+            classLoader1 = null;
+            addURL1 = null;
+        }
+        classLoader = classLoader1;
+        addURL = addURL1;
+    }
 
     @Override
     public void connect() {
@@ -41,57 +59,25 @@ public class JsMacrosEarlyRiser implements IMixinConnector {
             e.printStackTrace();
         }
 
-
-        //        try {
-        //            LOGGER.info(ClassLoader.getPlatformClassLoader());
-        //            ClassLoader parentCL = ClassLoader.getSystemClassLoader();
-        //            Field ucpf = parentCL.getClass().getSuperclass().getDeclaredField("ucp");
-        //            Object ucp = unsafe.getObject(parentCL, unsafe.objectFieldOffset(ucpf));
-        //            unsafe.putObject(ucp, unsafe.objectFieldOffset(ucp.getClass().getDeclaredField("loaders")), new ArrayList<>());
-        //            for (URL url : urls) {
-        //                addURL(ucp, url);
-        //            }
-        //            LOGGER.info("ATTEMPT PRELOAD ENGINE");
-        //            LOGGER.info(parentCL.loadClass("org.graalvm.polyglot.Engine"));
-        //        } catch (NoSuchFieldException | MalformedURLException | ClassNotFoundException e) {
-        //            e.printStackTrace();
-        //        }
-        TransformingClassLoader cl = ((TransformingClassLoader) JsMacrosEarlyRiser.class.getClassLoader());
-        cl.setFallbackClassLoader(loader = new URLClassLoader(urls.toArray(new URL[0])));
+        try {
+            TransformArchModsTask.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-
-    //    public void addURL(Object ucp, URL url) throws NoSuchFieldException, MalformedURLException {
-    //        url = new URL(url.toString().replaceAll("^(?:file|union):/", "jar:file:/") + "!/");
-    //        System.out.println("ADDING URL: " + url.toString());
-    //        Class<?> ucpc = ucp.getClass();
-    //        synchronized (ucp) {
-    //            if (url == null || unsafe.getBoolean(ucp, unsafe.objectFieldOffset(ucpc.getDeclaredField("closed")))) {
-    //                System.out.println("CLOSED?");
-    //                return;
-    //            }
-    //            ArrayDeque<URL> unopenedURLS = (ArrayDeque<URL>) unsafe.getObject(ucp, unsafe.objectFieldOffset(ucpc.getDeclaredField("unopenedUrls")));
-    //            synchronized (unopenedURLS) {
-    //                ArrayList<URL> path = (ArrayList<URL>) unsafe.getObject(ucp, unsafe.objectFieldOffset(ucpc.getDeclaredField("path")));
-    //                if (!path.contains(url)) {
-    //                    unopenedURLS.addLast(url);
-    //                    path.add(url);
-    //                }
-    //            }
-    //        }
-    //    }
 
     public void loadFakeFabricDeps() throws Exception {
         new FakeFabricLoader(new File(FMLLoader.getGamePath().toFile(), "mods/jsmacros")).loadMixins();
     }
 
-    public void loadManifestDeps() throws IOException {
-        Manifest manifest = FMLLoader.getLoadingModList().getModFileById("jsmacros").getFile().getSecureJar().getManifest();
+    public void loadManifestDeps() throws IOException, InvocationTargetException, IllegalAccessException {
+        Manifest manifest = FMLLoader.getLoadingModList().getModFileById("jsmacros").getManifest().orElseThrow(() -> new RuntimeException("Failed to find manifest, this is normal in the dev environment"));
         Attributes attr = manifest.getMainAttributes();
         String[] value = attr.getValue("JsMacrosDeps").split("\\s+");
         extract(value);
     }
 
-    public void extract(String[] mods) throws IOException {
+    public void extract(String[] mods) throws IOException, InvocationTargetException, IllegalAccessException {
         File modFolder = new File(FMLLoader.getGamePath().toFile(), "mods/jsmacros/dependencies");
         if (!modFolder.exists() && !modFolder.mkdirs()) throw new RuntimeException("failed to create deps folder dir");
         for (String mod : mods) {
@@ -100,24 +86,17 @@ public class JsMacrosEarlyRiser implements IMixinConnector {
             java.nio.file.Files.copy(JsMacrosEarlyRiser.class.getResourceAsStream("/META-INF/jars/"+mod),
                 modfile.toPath(),
                 StandardCopyOption.REPLACE_EXISTING);
-            urls.add(modfile.toURI().toURL());
+            addURL.invoke(classLoader, modfile.toURI().toURL());
+//            CoreModManager.getIgnoredMods().add(modfile.getName());
         }
     }
 
-    public static class ShimClassLoader extends URLClassLoader {
-        public ShimClassLoader() {
-            super(new URL[] {});
+    public void addResourceJar(String[] mods) throws InvocationTargetException, IllegalAccessException {
+        for (String mod : mods) {
+            LOGGER.log(Level.INFO, "[JsMacros] Adding JiJ Dependency: " + mod);
+            addURL.invoke(classLoader, JsMacrosEarlyRiser.class.getResource("/META-INF/jars/"+mod));
+            //CoreModManager.getIgnoredMods().add(modfile.getName());
         }
-
-        @Override
-        public void addURL(URL url) {
-            super.addURL(url);
-        }
-
-        @Override
-        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            return super.loadClass(name, resolve);
-        }
-
     }
+
 }

@@ -41,7 +41,7 @@ public class FakeFabricLoader implements FabricLoader {
             }
         }
         for (File f : urls) {
-            JsMacrosEarlyRiser.urls.add(f.toURI().toURL());
+            JsMacrosEarlyRiser.addURL.invoke(JsMacrosEarlyRiser.classLoader, f.toURI().toURL());
         }
         instance = this;
     }
