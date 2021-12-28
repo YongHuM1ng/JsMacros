@@ -140,7 +140,7 @@ public abstract class TextBuilder {
             } catch (Throwable ex) {
                 Core.getInstance().profile.logError(ex);
             }
-        })));
+        }))));
         return this;
     }
     
