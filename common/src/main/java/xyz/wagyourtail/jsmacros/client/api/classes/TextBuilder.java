@@ -134,13 +134,13 @@ public abstract class TextBuilder {
      * @return
      */
     public TextBuilder withCustomClickEvent(MethodWrapper<Object, Object, Object, ?> action) {
-        self.styled(style -> style.setClickEvent(new CustomClickEvent(() -> new Thread(() -> {
+        self.styled(style -> style.setClickEvent(new CustomClickEvent(() -> {
             try {
                 action.run();
             } catch (Throwable ex) {
                 Core.getInstance().profile.logError(ex);
             }
-        }))));
+        })));
         return this;
     }
     
