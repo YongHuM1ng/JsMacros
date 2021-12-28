@@ -240,7 +240,7 @@ public class Inventory<T extends GuiContainer> {
             if (hotbarSlot < 0 || hotbarSlot > 8)
                 throw new IllegalArgumentException("hotbarSlot must be between 0 and 8 or 40 for offhand.");
         }
-        man.method_2906(syncId, slot, hotbarSlot, SlotActionType.SWAP, player);
+        man.clickSlot(syncId, slot, hotbarSlot, 2, player);
         return this;
     }
     

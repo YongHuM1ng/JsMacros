@@ -10,6 +10,7 @@ import xyz.wagyourtail.jsmacros.client.api.helpers.TextHelper;
 import xyz.wagyourtail.jsmacros.client.api.sharedclasses.RenderCommon;
 import xyz.wagyourtail.jsmacros.client.api.sharedinterfaces.IDraw2D;
 import xyz.wagyourtail.jsmacros.client.gui.elements.Drawable;
+import xyz.wagyourtail.jsmacros.core.Core;
 import xyz.wagyourtail.jsmacros.core.MethodWrapper;
 
 import java.util.*;

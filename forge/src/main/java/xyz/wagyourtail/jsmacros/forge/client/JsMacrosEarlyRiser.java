@@ -56,12 +56,6 @@ public class JsMacrosEarlyRiser implements IFMLLoadingPlugin {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        try {
-            TransformArchModsTask.run();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public void loadFakeFabricDeps() throws Exception {

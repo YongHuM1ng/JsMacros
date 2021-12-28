@@ -155,7 +155,7 @@ public class EntityHelper<T extends Entity> extends BaseHelper<T> {
      * @param name
      */
     public void setCustomName(TextHelper name) {
-        base.setCustomName(name.getRaw());
+        base.setCustomName(name.getRaw().asFormattedString());
     }
 
     /**
