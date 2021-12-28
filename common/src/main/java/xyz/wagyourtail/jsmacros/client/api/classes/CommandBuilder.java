@@ -25,6 +25,7 @@ import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.*;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.ClientCommandHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,7 +225,12 @@ public class CommandBuilder {
                     return "CommandBuilder{\"called_by\": " + callback.getCtx().getTriggeringEvent().toString() + "}";
                 }
             }, Core.getInstance().config.getOptions(CoreConfigV2.class).maxLockTime);
-            boolean success = callback.apply(new CommandContextHelper(ctx));
+            boolean success = false;
+            try {
+                callback.apply(new CommandContextHelper(ctx));
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
             lock.releaseLock();
             return success ? 1 : 0;
         });
