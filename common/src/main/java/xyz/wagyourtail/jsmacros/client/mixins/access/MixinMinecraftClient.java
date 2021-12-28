@@ -54,7 +54,7 @@ class MixinMinecraftClient implements IMinecraftClient {
         if (old != null && ((IScreen) old).getOnClose() != null) {
             try {
                 ((IScreen) old).getOnClose().accept((IScreen) old);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Core.getInstance().profile.logError(e);
             }
         }

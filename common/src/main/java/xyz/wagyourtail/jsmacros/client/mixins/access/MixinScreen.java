@@ -665,7 +665,7 @@ public abstract class MixinScreen extends Gui implements IScreen, IMouseScrolled
             if (onScroll != null)
                 try {
                     onScroll.accept(new PositionCommon.Pos2D(i, j), (double) dw / 60D);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     e.printStackTrace();
                 }
         }
@@ -681,7 +681,7 @@ public abstract class MixinScreen extends Gui implements IScreen, IMouseScrolled
         if (onMouseDown != null)
             try {
                 onMouseDown.accept(new PositionCommon.Pos2D(mouseX, mouseY), button);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
     }
@@ -691,7 +691,7 @@ public abstract class MixinScreen extends Gui implements IScreen, IMouseScrolled
         if (onMouseDrag != null)
             try {
                 onMouseDrag.accept(new PositionCommon.Vec2D(mouseX, mouseY, button, time), button);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
     }
@@ -701,7 +701,7 @@ public abstract class MixinScreen extends Gui implements IScreen, IMouseScrolled
         if (onMouseUp != null)
             try {
                 onMouseUp.accept(new PositionCommon.Pos2D(mouseX, mouseY), button);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
     }
@@ -711,7 +711,7 @@ public abstract class MixinScreen extends Gui implements IScreen, IMouseScrolled
         if (Keyboard.getEventKeyState() && onKeyPressed != null)
             try {
                 onKeyPressed.accept(Keyboard.getEventKey(), createModifiers());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
     }
