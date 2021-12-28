@@ -2,7 +2,6 @@ package xyz.wagyourtail.jsmacros.client.api.classes;
 
 import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.Message;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.*;
@@ -25,7 +24,6 @@ import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.ClientCommandHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
