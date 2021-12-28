@@ -254,7 +254,7 @@ public class Inventory<T extends ContainerScreen<?>> {
             if (hotbarSlot < 0 || hotbarSlot > 8)
                 throw new IllegalArgumentException("hotbarSlot must be between 0 and 8 or 40 for offhand.");
         }
-        man.clickSlot(syncId, slot, hotbarSlot, SlotActionType.SWAP, player);
+        man.method_2906(syncId, slot, hotbarSlot, SlotActionType.SWAP, player);
         return this;
     }
     
